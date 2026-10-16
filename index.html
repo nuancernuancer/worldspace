@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Worldspace</title>
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Worldspace">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+</head><body>
+<style>
+/* layout: one terminal screen, title then a plain numbered list, left aligned */
+:root{--bg:#000;--fg:#ffd400;--dim:#8a7300;--font:"Courier New",Courier,ui-monospace,monospace;color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);margin:0;overflow:hidden}
+canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;opacity:.13}
+main{position:relative;height:100%;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;gap:2.5em;
+ padding-top:max(24px,env(safe-area-inset-top,0px));padding-bottom:max(24px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+ font-size:clamp(14px,2.2vw,20px);text-shadow:0 0 6px rgba(255,212,0,.35)}
+pre{margin:0;font:inherit;font-size:clamp(5px,1.55vw,16px);line-height:1.15;white-space:pre}
+ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.6em}
+a{color:var(--fg);text-decoration:none;white-space:pre;outline:none}
+a .m{display:inline-block;width:2ch}
+a:focus-visible{background:var(--fg);color:var(--bg);text-shadow:none}
+.head{display:flex;flex-direction:column;gap:.6em}
+.sub{letter-spacing:.3em}
+p{margin:0;color:var(--dim);font-size:.75em}
+@media (prefers-reduced-motion:reduce){canvas{display:none}}
+</style>
+<canvas id="grain"></canvas>
+<main>
+<div class="head">
+<pre aria-label="WORLDSPACE">__        __  ___   ____   _      ____   ____   ____      _      ____  _____
+\ \      / / / _ \ |  _ \ | |    |  _ \ / ___| |  _ \    / \    / ___|| ____|
+ \ \ /\ / / | | | || |_) || |    | | | |\___ \ | |_) |  / _ \  | |    |  _|
+  \ V  V /  | |_| ||  _ &lt; | |___ | |_| | ___) ||  __/  / ___ \ | |___ | |___
+   \_/\_/    \___/ |_| \_\|_____||____/ |____/ |_|    /_/   \_\ \____||_____|</pre>
+<div class="sub">the video game</div>
+</div>
+<ul id="menu">
+ <li><a href="https://claude.ai/artifact/BGUN4Y8ZJhZrY7mjx4cDHs" target="_blank" rel="noopener"><span class="m">&gt;</span>1 - Character Creator</a></li>
+ <li><a href="https://claude.ai/artifact/TtLSGr8A5Fac38gNnxQVCG" target="_blank" rel="noopener"><span class="m"> </span>2 - Starskimmer</a></li>
+ <li><a href="https://claude.ai/artifact/XLeczaydibEei2WY2WmNEE" target="_blank" rel="noopener"><span class="m"> </span>3 - Clyd3's</a></li>
+ <li><a href="https://claude.ai/artifact/BptBqCn2Pg99BGgaeQNWZf" target="_blank" rel="noopener"><span class="m"> </span>4 - Object Codex</a></li>
+ <li><a href="https://claude.ai/artifact/497fX1XKJsnuFJQtrxzgYc" target="_blank" rel="noopener"><span class="m"> </span>5 - Bon Voyage</a></li>
+ <li><a href="https://claude.ai/artifact/HE5986mH6V1EVmfGr1ULnM" target="_blank" rel="noopener"><span class="m"> </span>6 - Testing</a></li>
+ <li><a href="https://claude.ai/artifact/5yQXjJUgnUJvvLmDrpiCmi" target="_blank" rel="noopener"><span class="m"> </span>7 - NPC Codex</a></li>
+</ul>
+<p>W/S or arrows to move, Enter or a number to select</p>
+</main>
+<script>
+const items=[...document.querySelectorAll('#menu a')];let sel=0;
+function show(i){sel=(i+items.length)%items.length;items.forEach((a,k)=>a.querySelector('.m').textContent=k===sel?'>':' ');}
+items.forEach((a,k)=>a.addEventListener('mouseenter',()=>show(k)));
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();
+ if(k==='arrowdown'||k==='s'){show(sel+1);e.preventDefault();}
+ else if(k==='arrowup'||k==='w'){show(sel-1);e.preventDefault();}
+ else if(k==='enter'){items[sel].click();e.preventDefault();}
+ else if(/^[1-9]$/.test(k)&&items[k-1]){show(k-1);items[k-1].click();}});
+const c=document.getElementById('grain'),x=c.getContext('2d');let img;
+function size(){c.width=Math.ceil(innerWidth/2);c.height=Math.ceil(innerHeight/2);img=x.createImageData(c.width,c.height);}
+size();addEventListener('resize',size);
+let t=0;(function frame(){if(t++%3===0){const d=img.data;for(let i=0;i<d.length;i+=4){const v=Math.random()*255|0;d[i]=d[i+1]=d[i+2]=v;d[i+3]=255;}x.putImageData(img,0,0);}requestAnimationFrame(frame);})();
+</script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+</body></html>
