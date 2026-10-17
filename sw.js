@@ -1,5 +1,5 @@
 // Network first, cached copy when offline. Bump the name to force a refresh.
-const C='worldspace-v2',F=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png'];
+const C='worldspace-v3',F=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(F)));self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(n=>n!==C).map(n=>caches.delete(n)))));self.clients.claim();});
 self.addEventListener('fetch',e=>{if(new URL(e.request.url).origin!==location.origin)return;

@@ -1,4 +1,53 @@
-<!doctype html><html><head><meta name="theme-color" content="#000000"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="manifest" href="../manifest.webmanifest"><link rel="apple-touch-icon" href="../apple-touch-icon.png"><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><script>/* Worldspace app: on-device stand-in for claude.ai's page storage (db, user).
+   Same calls the scenes use: collection(c).doc(id).set/update/delete/get, collection(c).get(),
+   collection(c).orderBy(f).onSnapshot(cb). Data lives in IndexedDB 'worldspace-app', store 'docs',
+   key "<scene>|<collection>|<id>". 'sample' (asking Claude) is not available outside claude.ai. */
+(() => {
+  if (window.claude && window.claude.use) return;
+  const SCENE = (location.pathname.split('/').filter(Boolean).slice(-1)[0] || 'menu');
+  let dbp = null;
+  const open = () => dbp || (dbp = new Promise((ok, no) => {
+    const r = indexedDB.open('worldspace-app', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('docs');
+    r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error);
+  }));
+  const tx = async (mode, fn) => { const d = await open(); return new Promise((ok, no) => {
+    const t = d.transaction('docs', mode), s = t.objectStore('docs'); const out = fn(s);
+    t.oncomplete = () => ok(out && 'result' in out ? out.result : undefined); t.onerror = () => no(t.error); }); };
+  const key = (c, id) => SCENE + '|' + c + '|' + id;
+  const subs = {};
+  const snap = (c, rows) => ({ docs: rows.map(([id, v]) => ({ id, data: () => JSON.parse(JSON.stringify(v)), exists: true })), size: rows.length, empty: !rows.length });
+  async function all(c) {
+    const pre = SCENE + '|' + c + '|'; const rows = [];
+    await tx('readonly', s => { const q = s.openCursor(IDBKeyRange.bound(pre, pre + '￿'));
+      q.onsuccess = () => { const cur = q.result; if (cur) { rows.push([cur.key.slice(pre.length), cur.value]); cur.continue(); } }; });
+    return rows;
+  }
+  async function notify(c) { for (const sb of subs[c] || []) { let rows = await all(c);
+    if (sb.f) rows.sort((a, b) => ((a[1] || {})[sb.f] > (b[1] || {})[sb.f] ? 1 : -1));
+    try { sb.cb(snap(c, rows)); } catch (e) { console.error(e); } } }
+  const ref = (c, id) => ({
+    id,
+    async get() { const v = await tx('readonly', s => s.get(key(c, id))); return { id, exists: v !== undefined, data: () => v }; },
+    async set(v) { await tx('readwrite', s => s.put(JSON.parse(JSON.stringify(v)), key(c, id))); notify(c); },
+    async update(ch) { const k = key(c, id); const cur = await tx('readonly', s => s.get(k)); if (cur === undefined) throw { code: 'not-found' };
+      await tx('readwrite', s => s.put({ ...cur, ...JSON.parse(JSON.stringify(ch)) }, k)); notify(c); },
+    async delete() { await tx('readwrite', s => s.delete(key(c, id))); notify(c); },
+  });
+  const coll = (c, f) => ({
+    doc: id => ref(c, id ?? (Date.now().toString(36) + Math.random().toString(36).slice(2, 8))),
+    async add(v) { const r = ref(c, Date.now().toString(36) + Math.random().toString(36).slice(2, 8)); await r.set(v); return r; },
+    async get() { const rows = await all(c); if (f) rows.sort((a, b) => ((a[1] || {})[f] > (b[1] || {})[f] ? 1 : -1)); return snap(c, rows); },
+    orderBy: field => coll(c, field), limit() { return coll(c, f); }, where() { return coll(c, f); },
+    onSnapshot(cb) { const sb = { cb, f }; (subs[c] = subs[c] || []).push(sb); notify(c); return () => { subs[c] = subs[c].filter(x => x !== sb); }; },
+  });
+  const DB = { collection: c => coll(c) };
+  const USER = { async canEdit() { return true; }, async me() { return { name: 'You' }; } };
+  window.claude = { use: async n => { if (n === 'db') return DB; if (n === 'user') return USER; throw { code: 'unavailable', message: n + ' only works on claude.ai' }; } };
+  window.WS_APP_STORE = { open, all: async () => { const out = []; await tx('readonly', s => { const q = s.openCursor(); q.onsuccess = () => { const c = q.result; if (c) { out.push([c.key, c.value]); c.continue(); } }; }); return out; },
+    putAll: async rows => tx('readwrite', s => { for (const [k, v] of rows) s.put(v, k); }) };
+})();
+</script><meta name="theme-color" content="#000000"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><link rel="manifest" href="../manifest.webmanifest"><link rel="apple-touch-icon" href="../apple-touch-icon.png"><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Bon Voyage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
