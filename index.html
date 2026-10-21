@@ -93,11 +93,9 @@ p{margin:0;color:var(--dim);font-size:.75em}
 <div class="sub">the video game</div>
 </div>
 <ul id="menu">
- <li><a href="https://claude.ai/artifact/EWaM2HLL7izoh6XqwUNzJH" target="_blank" rel="noopener"><span class="m">&gt;</span>1 - Worldspace Studio</a></li>
- <li><a href="https://claude.ai/artifact/BSkb9uqtqkoNLC7evKKzkG" target="_blank" rel="noopener"><span class="m"> </span>2 - DnD Maps</a></li>
- <li><a href="https://claude.ai/artifact/HE5986mH6V1EVmfGr1ULnM" target="_blank" rel="noopener"><span class="m"> </span>3 - Testing</a></li>
+ <li><a href="https://lucynet2.tail22015c.ts.net/#/worldspace"><span class="m">&gt;</span>1 - Enter Worldspace</a></li>
 </ul>
-<p>W/S or arrows to move, Enter or a number to select</p>
+<p>Press Enter or tap to start</p>
 <p class="saves"><button id="exp" type="button">Export saves</button> <label for="imp">Import saves<input id="imp" type="file" accept=".json,application/json" hidden></label> <span id="saveMsg"></span></p>
 <script>
 document.getElementById('exp').onclick=async()=>{const rows=await WS_APP_STORE.all();const b=new Blob([JSON.stringify({worldspace:1,at:new Date().toISOString(),rows})],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='worldspace-saves-'+new Date().toISOString().slice(0,10)+'.json';a.click();document.getElementById('saveMsg').textContent=rows.length+' saved items exported';};
